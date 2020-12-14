@@ -1,6 +1,6 @@
 """Flask app for Cupcakes"""
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from models import db, connect_db, Cupcake
 
 app = Flask(__name__)
@@ -11,6 +11,14 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 connect_db(app)
 db.create_all()
+
+
+@app.route("/")
+def cupcakes_show():
+    """ Show HTML page with empty list where cupcakes should appear
+        and a form where new cupcakes can be added. """
+
+    return render_template("index.html")
 
 
 @app.route("/api/cupcakes")
@@ -37,8 +45,8 @@ def cupcake_list_single(cupcake_id):
 
 @app.route("/api/cupcakes", methods=["POST"])
 def cupcake_create():
-    """ Create a cupcake with flavor, size, rating and image data
-        from the body of the request.
+    """ Create a cupcake with flavor, size, rating and image, passing in
+        the data as body of the request.
 
         Return JSON like:
         {cupcake: {id, flavor, size, rating, image}}"""
@@ -47,7 +55,10 @@ def cupcake_create():
                           flavor=request.json["flavor"],
                           size=request.json["size"],
                           rating=request.json["rating"],
-                          image=request.json["image"]
+                          image=(
+                                 request.json["image"] if request.json["image"]
+                                 else None
+                                )
     )
 
     db.session.add(new_cupcake)
@@ -60,26 +71,31 @@ def cupcake_create():
 
 @app.route("/api/cupcakes/<int:cupcake_id>", methods=["PATCH"])
 def cupcake_update(cupcake_id):
-    """Update a cupcake with the id passed in the URL
-    and flavor, size, rating and image data from the body of the request.
-    return JSON like:
-    {cupcake: {id, flavor, size, rating, image}}"""
+    """ Update a cupcake with the id passed in the URL
+        From id, grab flavor, size, rating and image, passing in the data in
+        body of the request.
+        Return JSON like:
+            {cupcake: {id, flavor, size, rating, image}}"""
 
-    cupcake = Cupcake.query.get_or_404(cupcake_id)
-    cupcake.flavor = request.json["flavor"]
-    cupcake.size = request.json["size"]
-    cupcake.rating = request.json["rating"]
-    cupcake.image = request.json["image"]
-    db.session.commit()
+    cupcake = Cupcake.query.get(cupcake_id)
 
-    serialized = cupcake.serialize()
-    return jsonify(cupcake=serialized)
+    if cupcake:
+        cupcake.flavor = request.json["flavor"]
+        cupcake.size = request.json["size"]
+        cupcake.rating = request.json["rating"]
+        cupcake.image = request.json["image"]
+        db.session.commit()
 
+        serialized = cupcake.serialize()
+        return jsonify(cupcake=serialized)
+
+    else:
+        return (jsonify({"message": "Cupcake id not found"}), 404)
 
 @app.route("/api/cupcakes/<int:cupcake_id>", methods=["DELETE"])
 def cupcake_delete(cupcake_id):
     """ Delete cupcake with the id passed in the URL.
-     Return with JSON like {message: "Deleted"}. """
+        Return with JSON like {message: "Deleted"}. """
 
     cupcake = Cupcake.query.get_or_404(cupcake_id)
     db.session.delete(cupcake)

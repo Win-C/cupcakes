@@ -32,7 +32,7 @@ CUPCAKE_DATA_UPDATE = {
     "flavor": "TestFlavorUpdate",
     "size": "TestSizeUpdate",
     "rating": 6,
-    "image": "http://test.com/cupcake.jpg/update" 
+    "image": "http://test.com/cupcake.jpg/update"
 }
 
 
@@ -130,7 +130,7 @@ class CupcakeViewsTestCase(TestCase):
                             "flavor": "TestFlavorUpdate",
                             "size": "TestSizeUpdate",
                             "rating": 6,
-                            "image": "http://test.com/cupcake.jpg/update"
+                            "image": "http://test.com/cupcake.jpg/update",
                             }
             })
 
