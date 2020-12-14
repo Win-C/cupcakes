@@ -24,7 +24,6 @@ def cupcakes_list_all():
     return jsonify(cupcakes=serialized)
 
 
-# Note: look into having cupcake-id, using a dash vs. underscore
 @app.route("/api/cupcakes/<int:cupcake_id>")
 def cupcake_list_single(cupcake_id):
     """ Return JSON like:
