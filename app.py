@@ -33,14 +33,15 @@ def cupcakes_list_all():
 
 
 @app.route("/api/cupcakes/<int:cupcake_id>")
-def cupcake_list_single(cupcake_id):
+def cupcake_detail(cupcake_id):
     """ Return JSON like:
         {cupcake: {id, flavor, size, rating, image}} """
-
-    cupcake = Cupcake.query.get_or_404(cupcake_id)
-    serialized = cupcake.serialize()
-
-    return jsonify(cupcake=serialized)
+    cupcake = Cupcake.query.get(cupcake_id)
+    if cupcake:
+        serialized = cupcake.serialize()
+        return jsonify(cupcake=serialized)
+    else:
+        return (jsonify({"message": "Cupcake id not found"}), 404)
 
 
 @app.route("/api/cupcakes", methods=["POST"])
@@ -67,6 +68,7 @@ def cupcake_create():
     serialized = new_cupcake.serialize()
 
     return (jsonify(cupcake=serialized), 201)
+    
 
 
 @app.route("/api/cupcakes/<int:cupcake_id>", methods=["PATCH"])
@@ -92,13 +94,34 @@ def cupcake_update(cupcake_id):
     else:
         return (jsonify({"message": "Cupcake id not found"}), 404)
 
+
+# return (jsonify(message="Cupcake id not found"), 404)
+
 @app.route("/api/cupcakes/<int:cupcake_id>", methods=["DELETE"])
 def cupcake_delete(cupcake_id):
     """ Delete cupcake with the id passed in the URL.
         Return with JSON like {message: "Deleted"}. """
 
-    cupcake = Cupcake.query.get_or_404(cupcake_id)
-    db.session.delete(cupcake)
-    db.session.commit()
+    cupcake = Cupcake.query.get(cupcake_id)
+    if cupcake:
+        db.session.delete(cupcake)
+        db.session.commit()
 
-    return jsonify({"message": "Deleted"})
+        return jsonify({"message": "Deleted"})
+    else:
+        return (jsonify({"message": "Cupcake id not found"}), 404)
+
+
+@app.route("/api/cupcakes/search")
+def cupcake_search():
+    """ Given the search term, filter the results
+    Return JSON like:
+        {cupcakes: [{id, flavor, size, rating, image}, ...]} """
+
+    term = request.args['term']
+    search = "%{}%".format(term)
+    cupcakes = Cupcake.query.filter(Cupcake.flavor.ilike(search) |
+                                    Cupcake.size.ilike(search)).all()
+
+    serialized = [c.serialize() for c in cupcakes]
+    return jsonify(cupcakes=serialized)

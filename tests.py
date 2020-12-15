@@ -73,7 +73,9 @@ class CupcakeViewsTestCase(TestCase):
                         "image": "http://test.com/cupcake.jpg"
                     }
                 ]
-            })
+            }
+
+            )
 
     def test_get_cupcake(self):
         with app.test_client() as client:
@@ -91,6 +93,11 @@ class CupcakeViewsTestCase(TestCase):
                     "image": "http://test.com/cupcake.jpg"
                 }
             })
+            # test 404
+            url = "/api/cupcakes/1000"
+            resp = client.get(url)
+            self.assertEqual(resp.status_code, 404)
+            self.assertEqual(resp.json, {"message": "Cupcake id not found"})
 
     def test_create_cupcake(self):
         with app.test_client() as client:
@@ -133,6 +140,11 @@ class CupcakeViewsTestCase(TestCase):
                             "image": "http://test.com/cupcake.jpg/update",
                             }
             })
+            # test 404
+            url = "/api/cupcakes/1000"
+            resp = client.patch(url, json=CUPCAKE_DATA_UPDATE)
+            self.assertEqual(resp.status_code, 404)
+            self.assertEqual(resp.json, {"message": "Cupcake id not found"})
 
     def test_delete_cupcake(self):
         with app.test_client() as client:
@@ -144,3 +156,8 @@ class CupcakeViewsTestCase(TestCase):
             data = resp.json
             self.assertEqual(data, {"message": "Deleted"})
             self.assertEqual(Cupcake.query.count(), 0)
+            # test 404
+            url = "/api/cupcakes/1000"
+            resp = client.delete(url)
+            self.assertEqual(resp.status_code, 404)
+            self.assertEqual(resp.json, {"message": "Cupcake id not found"})

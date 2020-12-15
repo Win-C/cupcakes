@@ -2,39 +2,50 @@
 
 const $cupcakesList = $("#cupcakesList");
 const $cupcakeForm = $("#cupcakeForm");
+const $searchForm = $("#searchForm")
+// conductor function decouple 
+// get function returns the data
 
+async function start(){
+  let cupcakes = await getCupcakes();
+  displayCupcakeList(cupcakes);
+}
 
-/** Get list of cupcakes and call displayCupcakeList function. */
+/** Get list of cupcakes and return list of cupcakes*/
 async function getCupcakes() {
   let response = await axios.get("/api/cupcakes");
-  displayCupcakeList(response.data.cupcakes);
+  return response.data.cupcakes;
 }
 
 /** Adds cupcake from cupcake list to the DOM. */
-async function displayCupcakeList(cupcakes) {
+function displayCupcakeList(cupcakes) {
   // First empty cupcakeList and cupcakeForm on DOM
   $cupcakesList.empty();
   $cupcakeForm[0].reset();
 
-  let $cupcake = $('<li>');
+
 
   for (let cupcake of cupcakes) {
     let $image = undefined;
-
+    let $cupcake = $('<li style="height:300px">');
+    let $textField = $('<div>').addClass("col-3");
+    let $imageField = $('<div style="height:300px">').addClass("col-9");
     for (let [key, value] of Object.entries(cupcake)) {
-      let $field = undefined;
 
       if (key === "image") {
-        $image = $(`<img src="${value}">`)
+        $image = $(`<img src="${value}">`);
+        $image.addClass("h-75")
+        $imageField.append($image);
       }
       else if (key !== "id") {
-        $field = $("<p>").text(`${key}: ${value}`)
+        let $field = $("<p>").text(`${key}: ${value}`);
+        $textField.append($field);
       }
 
-      $cupcake.append($field);
     }
-
-    $cupcake.append($image);
+    $cupcake.append($textField);
+    $cupcake.append($imageField);
+    $cupcake.addClass("row");
     $cupcakesList.append($cupcake);
   }
 }
@@ -45,23 +56,40 @@ async function handleAddCupcake(evt) {
 
   let data = {};
 
-  // Grab cucpake form values and put into a list
-  let values = $('#cupcakeForm :input');
+  // Grab cupcake form inputs and put into a list
+  let $inputs = $('#cupcakeForm :input');
 
-  // Create data object of values
-  for (let value of values) {
-    if (value.type !== "submit")
-      data[value.name] = value.value;
+  // Create data object of form inputs
+  for (let input of $inputs) {
+    if (input.type !== "submit")
+      data[input.name] = input.value;
   }
 
   await axios.post(
     "/api/cupcakes",
     data
   )
-
-  getCupcakes();
+  start();
 }
 
 
-getCupcakes();
+async function handleSearch(evt) {
+  evt.preventDefault();
+  let data = {};
+  let $inputs = $('#searchForm :input');
+
+  // Create data object of form inputs
+  for (let input of $inputs) {
+    if (input.type !== "submit")
+      data[input.name] = input.value;
+  }
+  let resp = await axios.get(
+    "/api/cupcakes/search",
+    {params:data}  )
+  let cupcakes = resp.data.cupcakes;
+  displayCupcakeList(cupcakes);
+}
+
+start();
 $cupcakeForm.on("submit", handleAddCupcake);
+$searchForm.on("submit", handleSearch);
